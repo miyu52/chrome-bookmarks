@@ -1,0 +1,18 @@
+[project]
+name = "chrome-bookmarks"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "html5lib>=1.1",
+]
+
+[project.scripts]
+chrome-bookmarks = "chrome_bookmarks.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+"" = "src"
