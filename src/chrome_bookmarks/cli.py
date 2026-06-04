@@ -9,7 +9,24 @@ from chrome_bookmarks.filter import BookmarkFilterError
 from chrome_bookmarks.parser import BookmarkParseError, parse
 
 
+def _ensure_utf8() -> None:
+    """Reconfigure stdout/stderr to UTF-8 on Windows to avoid garbled output.
+
+    On Windows git-bash/mintty, the terminal uses UTF-8 but Python defaults
+    to the system code page (e.g. cp936), causing Chinese text to appear
+    garbled. This forces UTF-8 for interactive terminals.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
 def main() -> None:
+    _ensure_utf8()
+
     parser = argparse.ArgumentParser(
         prog="chrome-bookmarks",
         description="解析 Chrome/Netscape 导出的 bookmarks.html 文件",
