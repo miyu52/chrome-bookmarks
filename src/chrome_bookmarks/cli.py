@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import sys
 
 from chrome_bookmarks.filter import BookmarkFilterError
@@ -10,16 +11,23 @@ from chrome_bookmarks.parser import BookmarkParseError, parse
 
 
 def _ensure_utf8() -> None:
-    """Reconfigure stdout/stderr to UTF-8 on Windows to avoid garbled output.
+    """Force stdout/stderr to UTF-8 to avoid garbled output on Windows.
 
     On Windows git-bash/mintty, the terminal uses UTF-8 but Python defaults
     to the system code page (e.g. cp936), causing Chinese text to appear
-    garbled. This forces UTF-8 for interactive terminals.
+    garbled. Replacing the whole TextIOWrapper is more reliable than
+    reconfigure() across different Python distributions.
     """
-    for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
+    for attr in ("stdout", "stderr"):
+        stream = getattr(sys, attr)
+        if hasattr(stream, "buffer"):
             try:
-                stream.reconfigure(encoding="utf-8", errors="replace")
+                setattr(sys, attr, io.TextIOWrapper(
+                    stream.buffer,
+                    encoding="utf-8",
+                    errors="replace",
+                    line_buffering=getattr(stream, "line_buffering", True),
+                ))
             except Exception:
                 pass
 
