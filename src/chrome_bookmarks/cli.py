@@ -49,8 +49,9 @@ def main() -> None:
         "-o", "--output",
         default="tree",
         help=(
-            "输出格式: json, markdown, tree, fields=<模板>。"
-            "fields 模板示例: '$folder,${title,name},$url'"
+            "输出格式: json, markdown, tree, fields=<模板>, template=<名称|路径>。"
+            "fields 模板示例: '$folder,${title,name},$url'。"
+            "template 示例: template=markdown-table 或 template=~/my.j2"
         ),
     )
     parse_cmd.add_argument(
@@ -101,10 +102,14 @@ def main() -> None:
     # Parse output format
     output_fmt = args.output
     fields_template = ""
+    template_spec = ""
     if output_fmt.startswith("fields="):
         fields_template = output_fmt[len("fields="):]
         output_fmt = "fields"
-    if output_fmt not in ("json", "markdown", "tree", "fields"):
+    elif output_fmt.startswith("template="):
+        template_spec = output_fmt[len("template="):]
+        output_fmt = "template"
+    if output_fmt not in ("json", "markdown", "tree", "fields", "template"):
         print(f"错误: 不支持的输出格式 — {output_fmt}", file=sys.stderr)
         sys.exit(1)
 
@@ -139,7 +144,7 @@ def main() -> None:
 
     # Generate output
     try:
-        output = _format_output(tree, output_fmt, fields_template, args)
+        output = _format_output(tree, output_fmt, fields_template, template_spec, args)
     except Exception as e:
         print(f"错误: 输出生成失败 — {e}", file=sys.stderr)
         sys.exit(1)
@@ -147,7 +152,7 @@ def main() -> None:
     print(output)
 
 
-def _format_output(tree, fmt: str, fields_template: str, args) -> str:
+def _format_output(tree, fmt: str, fields_template: str, template_spec: str, args) -> str:
     """Format the tree according to CLI args."""
     if fmt == "json":
         return tree.to_json(flatten=args.flatten, utc=args.utc)
@@ -160,6 +165,11 @@ def _format_output(tree, fmt: str, fields_template: str, args) -> str:
             print("错误: -o fields 需要指定模板，例如: -o 'fields=$folder,${title,name},$url'", file=sys.stderr)
             sys.exit(1)
         return tree.to_fields(template=fields_template, utc=args.utc)
+    elif fmt == "template":
+        if not template_spec:
+            print("错误: -o template 需要指定模板名或文件路径，例如: -o template=markdown-table", file=sys.stderr)
+            sys.exit(1)
+        return tree.to_template(template_spec=template_spec)
 
     return tree.to_tree()
 
