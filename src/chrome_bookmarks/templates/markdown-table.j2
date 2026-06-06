@@ -4,7 +4,7 @@
 {%- endmacro %}
 
 {% macro render_folder(folder) %}
-{{ heading(folder.depth + 2) }} {{ folder.name }}
+{{ heading(folder.depth + 1) }} {{ folder.name }}
 
 {% set bookmarks = folder.children | selectattr('type', 'equalto', 'bookmark') | list %}
 {% set subdirs = folder.children | selectattr('type', 'equalto', 'folder') | list %}
