@@ -12,7 +12,7 @@
 | 时间 | 书签 |
 | ---------- | --- |
 {% for bm in bookmarks %}
-| `{{ bm.add_date | date_fmt('%Y%m%d') }}` | [`{{ bm.title | replace('|', '｜') }}`]({{ bm.url }}) |
+| `{{ bm.add_date | date_fmt('%Y%m%d') }}` | [`{{ bm.title | replace('|', '-') }}`]({{ bm.url }}) |
 {% endfor %}
 
 {% endif %}
