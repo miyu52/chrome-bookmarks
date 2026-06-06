@@ -245,3 +245,78 @@ def test_output_fields():
     lines = fields.split("\n")
     assert len(lines) > 0
     assert "Python 官方文档" in lines
+
+
+# ── Template (Jinja2) ─────────────────────────────────
+
+def test_template_builtin_markdown_table():
+    tree = parse(FIXTURE)
+    result = tree.to_template("markdown-table")
+    assert "## 书签栏" in result
+    assert "### 编程" in result
+    assert "| 时间 | 书签 |" in result
+    assert "`20240117`" in result
+    assert "[`Python 官方文档`](https://docs.python.org/3/)" in result
+    assert "*(空)*" in result
+
+
+def test_template_with_filter():
+    tree = parse(FIXTURE)
+    filtered = tree.filter("domain=github.com")
+    result = filtered.to_template("markdown-table")
+    # Should still have folder structure
+    assert "GitHub" in result
+    # github bookmarks: GitHub (bookmark), Mozilla on GitHub
+    assert result.count("github.com") >= 2
+
+
+def test_template_list_builtins():
+    from chrome_bookmarks.template_engine import list_builtin_templates
+    builtins = list_builtin_templates()
+    assert "markdown-table" in builtins
+
+
+def test_template_date_fmt_filter():
+    from chrome_bookmarks.template_engine import _date_fmt
+    assert _date_fmt(1705478400, "%Y%m%d") == "20240117"
+    assert _date_fmt(1705478400, "%Y-%m-%d") == "2024-01-17"
+    assert _date_fmt(0, "%Y%m%d") == ""
+
+
+def test_template_missing_import():
+    """Template rendering raises ImportError if jinja2 is not installed."""
+    import importlib
+    import chrome_bookmarks.template_engine as te
+
+    tree = parse(FIXTURE)
+    # Temporarily block jinja2 import
+    import builtins
+    original_import = builtins.__import__
+
+    def mock_import(name, *args, **kwargs):
+        if name == "jinja2" or name.startswith("jinja2."):
+            raise ImportError("No module named 'jinja2'")
+        return original_import(name, *args, **kwargs)
+
+    try:
+        builtins.__import__ = mock_import
+        importlib.reload(te)
+        result = te.render_template_debug(tree, "markdown-table")
+        assert "错误" in result
+        assert "jinja2" in result
+    finally:
+        builtins.__import__ = original_import
+        importlib.reload(te)
+
+
+def test_template_nonexistent_file():
+    tree = parse(FIXTURE)
+    try:
+        result = tree.to_template("/nonexistent/template.j2")
+    except FileNotFoundError:
+        return  # expected
+    # If it didn't raise, check error message
+    # (the debug version catches it)
+    from chrome_bookmarks.template_engine import render_template_debug
+    result = render_template_debug(tree, "/nonexistent/template.j2")
+    assert "不存在" in result

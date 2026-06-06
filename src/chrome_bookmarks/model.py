@@ -132,6 +132,19 @@ class Root:
 
         return format_fields(self, template=template, utc=utc)
 
+    def to_template(self, template_spec: str) -> str:
+        """Render with a Jinja2 template.
+
+        Args:
+            template_spec: Template name (e.g. "markdown-table") or file path.
+
+        Returns:
+            Rendered string.
+        """
+        from chrome_bookmarks.output import format_template
+
+        return format_template(self, template_spec)
+
     def iter_nodes(self):
         """Yield all nodes in all roots, depth-first."""
         for root_folder in self.roots:

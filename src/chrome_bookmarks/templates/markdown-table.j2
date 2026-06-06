@@ -1,0 +1,30 @@
+{# markdown-table — Markdown 表格输出（按文件夹分组） #}
+{% macro heading(level) -%}
+{%- for _ in range(level) %}#{%- endfor %}
+{%- endmacro %}
+
+{% macro render_folder(folder) %}
+{{ heading(folder.depth + 2) }} {{ folder.name }}
+
+{% set bookmarks = folder.children | selectattr('type', 'equalto', 'bookmark') | list %}
+{% set subdirs = folder.children | selectattr('type', 'equalto', 'folder') | list %}
+{% if bookmarks %}
+| 时间 | 书签 |
+| ---------- | --- |
+{% for bm in bookmarks %}
+| `{{ bm.add_date | date_fmt('%Y%m%d') }}` | [`{{ bm.title }}`]({{ bm.url }}) |
+{% endfor %}
+
+{% endif %}
+{% if not bookmarks and not subdirs %}
+*(空)*
+
+{% endif %}
+{% for sub in subdirs %}
+{{ render_folder(sub) -}}
+{% endfor %}
+{% endmacro %}
+
+{% for root_folder in root.roots %}
+{{ render_folder(root_folder) -}}
+{% endfor %}

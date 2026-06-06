@@ -8,7 +8,7 @@ cd chrome-bookmarks
 uv venv && uv pip install -e .
 ```
 
-依赖：Python ≥3.10、beautifulsoup4 ≥4.12、html5lib。
+依赖：Python ≥3.10、beautifulsoup4 ≥4.12、html5lib、jinja2 ≥3.1（仅 template 输出需要）。
 
 ## CLI 用法
 
@@ -32,6 +32,10 @@ chrome-bookmarks parse bookmarks.html -o 'fields=$folder,${title,name},$url'
 # Tree 视图
 chrome-bookmarks parse bookmarks.html -o tree              # 默认 emoji
 chrome-bookmarks parse bookmarks.html -o tree --ascii      # 纯 ASCII
+
+# Jinja2 模板输出
+chrome-bookmarks parse bookmarks.html -o template=markdown-table   # 内置模板
+chrome-bookmarks parse bookmarks.html -o template=~/my-template.j2 # 自定义模板文件
 ```
 
 ### 过滤
@@ -77,7 +81,32 @@ chrome-bookmarks parse bookmarks.html \
 
 `--prefix` 支持与 `fields` 相同的 `$变量` 语法，`\n` 表示换行。
 
-## 模板变量
+## 模板（Jinja2）
+
+通过 `-o template=<名称|路径>` 使用，传入完整的 `Root` 对象。
+
+```bash
+# 内置模板：Markdown 表格（按文件夹分组）
+chrome-bookmarks parse bookmarks.html -o template=markdown-table
+
+# 自定义模板文件
+chrome-bookmarks parse bookmarks.html -o template=~/my-template.j2
+
+# 配合过滤
+chrome-bookmarks parse bookmarks.html \
+  --filter "folder=书签栏/编程" \
+  -o template=markdown-table
+```
+
+**模板上下文：** `root` 对象可直接遍历，所有节点字段（`name`、`title`、`url`、`add_date`、`folder_path`、`type`、`depth`、`children` 等）均可访问。
+
+**自定义 Jinja2 filter：**
+
+| filter | 用途 | 示例 |
+|--------|------|------|
+| `date_fmt(fmt)` | Unix 时间戳格式化 | `{{ bm.add_date \| date_fmt('%Y%m%d') }}` → `20240117` |
+
+## fields 模板变量
 
 | 变量 | 说明 |
 |------|------|
@@ -109,6 +138,7 @@ print(filtered.to_json())
 print(filtered.to_markdown())
 print(filtered.to_tree())
 print(filtered.to_fields("$folder,${title,name},$url"))
+print(filtered.to_template("markdown-table"))
 ```
 
 ## 项目结构
@@ -117,7 +147,10 @@ print(filtered.to_fields("$folder,${title,name},$url"))
 src/chrome_bookmarks/
 ├── model.py        数据模型
 ├── parser.py       HTML 解析
-├── template.py     模板引擎
+├── template.py         $变量模板引擎
+├── template_engine.py  Jinja2 模板引擎
+├── templates/          内置 Jinja2 模板
+│   └── markdown-table.j2
 ├── filter.py       树筛选
 ├── output.py       输出格式化
 └── cli.py          CLI 入口

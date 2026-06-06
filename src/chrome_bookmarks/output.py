@@ -250,3 +250,19 @@ def format_fields(root: Root, template: str, utc: bool = False) -> str:
             rendered = render_template(node, template, utc)
             lines.append(rendered)
     return "\n".join(lines)
+
+
+def format_template(root: Root, template_spec: str) -> str:
+    """Render the bookmark tree with a Jinja2 template.
+
+    Args:
+        root: Parsed bookmark tree.
+        template_spec: Template name (e.g. "markdown-table") or path
+                       (e.g. "~/my-template.j2").
+
+    Returns:
+        Rendered string.
+    """
+    from chrome_bookmarks.template_engine import render_template as render_j2
+
+    return render_j2(root, template_spec)
