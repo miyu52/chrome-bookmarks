@@ -252,8 +252,8 @@ def test_output_fields():
 def test_template_builtin_markdown_table():
     tree = parse(FIXTURE)
     result = tree.to_template("markdown-table")
-    assert "## 书签栏" in result
-    assert "### 编程" in result
+    assert "# 书签栏" in result
+    assert "## 编程" in result
     assert "| 时间 | 书签 |" in result
     assert "`20240117`" in result
     assert "[`Python 官方文档`](https://docs.python.org/3/)" in result
